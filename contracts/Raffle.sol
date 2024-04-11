@@ -3,10 +3,10 @@ pragma solidity ^0.8.7;
 import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
 
-error Raffel_NotEnoughETHEntered();
+error Raffle_NotEnoughETHEntered();
 error Raffle__TransferFailed();
 
-abstract contract Raffel is VRFConsumerBaseV2 {
+abstract contract Raffle is VRFConsumerBaseV2 {
     /**state variable */
     uint256 private immutable i_entranceFee;
     address payable[] private s_players;
@@ -24,7 +24,7 @@ abstract contract Raffel is VRFConsumerBaseV2 {
     address private s_recentWinner;
 
     /**Events */
-    event RaffelEnter(address indexed player);
+    event RaffleEnter(address indexed player);
     event RequestedRaffleWinner(uint256 indexed requestId);
     event WinnerPicked(address indexed player);
 
@@ -44,10 +44,10 @@ abstract contract Raffel is VRFConsumerBaseV2 {
 
     function enterRaffle() public payable {
         if (msg.value < i_entranceFee) {
-            revert Raffel_NotEnoughETHEntered();
+            revert Raffle_NotEnoughETHEntered();
         }
         s_players.push(payable(msg.sender));
-        emit RaffelEnter(msg.sender);
+        emit RaffleEnter(msg.sender);
     }
 
     function requestRandomWinner() external {
