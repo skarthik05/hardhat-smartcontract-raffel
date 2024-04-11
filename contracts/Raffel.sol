@@ -4,6 +4,7 @@ import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBa
 import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
 
 error Raffel_NotEnoughETHEntered();
+error Raffle__TransferFailed();
 
 abstract contract Raffel is VRFConsumerBaseV2 {
     /**state variable */
@@ -19,9 +20,13 @@ abstract contract Raffel is VRFConsumerBaseV2 {
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
 
+    /**Loattery Variable */
+    address private s_recentWinner;
+
     /**Events */
     event RaffelEnter(address indexed player);
     event RequestedRaffleWinner(uint256 indexed requestId);
+    event WinnerPicked(address indexed player);
 
     constructor(
         address vrfCoordinatorV2,
@@ -56,7 +61,20 @@ abstract contract Raffel is VRFConsumerBaseV2 {
         emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 requesId, uint256[] memory randomWords) internal override {}
+    function fulfillRandomWords(
+        uint256, // requesId
+        uint256[] memory randomWords
+    ) internal override {
+        uint256 indexOfWinner = randomWords[0] % s_players.length;
+        address payable recentWinner = s_players[indexOfWinner];
+        s_recentWinner = recentWinner;
+        (bool success, ) = recentWinner.call{value: address(this).balance}("");
+        // require(success, "Transfer failed");
+        if (!success) {
+            revert Raffle__TransferFailed();
+        }
+        emit WinnerPicked(recentWinner);
+    }
 
     /**View / Pure functions */
     function getEntranceFee() public view returns (uint256) {
@@ -65,5 +83,9 @@ abstract contract Raffel is VRFConsumerBaseV2 {
 
     function getPlayer(uint256 index) public view returns (address) {
         return s_players[index];
+    }
+
+    function getRecentWinner() public view returns (address) {
+        return s_recentWinner;
     }
 }
